@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">PayUSdkTest</string>
+
+    <string-array name="test_actions_array">
+        <item>TEST LU browser</item>
+        <item>TEST ALU request</item>
+        <item>TEST IOS request</item>
+        <item>TEST IRN request</item>
+        <item>TEST IDN request</item>
+    </string-array>
+
+</resources>
