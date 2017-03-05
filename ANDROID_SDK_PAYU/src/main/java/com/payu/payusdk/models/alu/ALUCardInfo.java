@@ -24,14 +24,12 @@ public class ALUCardInfo implements Parcelable {
     private String ccOwner;
     private String ccToken;
 
-    public ALUCardInfo(String ccNumber, String expMonth, String expYear,
-            String ccCVV, String ccOwner, String ccToken) {
+    public ALUCardInfo(String ccNumber, String expMonth, String expYear, String ccCVV, String ccOwner) {
         this.ccNumber = ccNumber;
         this.expMonth = expMonth;
         this.expYear = expYear;
         this.ccCVV = ccCVV;
         this.ccOwner = ccOwner;
-        this.ccToken = ccToken;
     }
 
     private ALUCardInfo(Parcel in) {

@@ -139,7 +139,10 @@ public class ALURequestBuilder extends BaseRequestBuilder {
         dataMap.put(CARD_EXP_YEAR, cardInfo.getExpYear());
         dataMap.put(CARD_CC_CVV, cardInfo.getCcCVV());
         dataMap.put(CARD_CC_OWNER, cardInfo.getCcOwner());
-        dataMap.put(CARD_CC_TOKEN, cardInfo.getCcToken());
+
+        if (!TextUtils.isEmpty(cardInfo.getCcToken())) {
+            dataMap.put(CARD_CC_TOKEN, cardInfo.getCcToken());
+        }
 
         return this;
     }
@@ -242,7 +245,7 @@ public class ALURequestBuilder extends BaseRequestBuilder {
     }
 
     public ALURequestBuilder setIsTestOrder(boolean enable) {
-        dataMap.put(TEST_ORDER, String.valueOf(enable));
+        dataMap.put(TEST_ORDER, String.valueOf(enable).toUpperCase());
 
         return this;
     }

@@ -10,9 +10,7 @@ import com.payu.payusdk.models.lu.LUProduct;
 import com.payu.payusdk.utils.DateUtils;
 import com.payu.payusdk.utils.EncodeUtils;
 
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.BILL_COUNTRY_CODE;
 import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.BILL_EMAIL;
@@ -42,11 +40,8 @@ import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.TIMEOUT_URL;
 
 public class LURequestBuilder extends BaseRequestBuilder {
 
-    private LinkedList<Item> itemsList;
-
     public LURequestBuilder(String secretKey) {
         super(secretKey);
-        itemsList = new LinkedList<>();
     }
 
     // -- START required fields ---
@@ -142,39 +137,45 @@ public class LURequestBuilder extends BaseRequestBuilder {
     }
 
     public LURequestBuilder setIsTestOrder(boolean enable) {
-        dataMap.put(TEST_ORDER, String.valueOf(enable));
+        dataMap.put(TEST_ORDER, String.valueOf(enable).toUpperCase());
 
         return this;
     }
 
     public LURequestBuilder setDebug(boolean enable) {
-        dataMap.put(DEBUG, String.valueOf(enable));
+        dataMap.put(DEBUG, String.valueOf(enable).toUpperCase());
 
         return this;
     }
 
     public LURequestBuilder addProduct(LUProduct product) {
-        Item item = new Item();
+        if (!TextUtils.isEmpty(product.getName())) {
+            dataMap.put(ORDER_PRODUCT_NAME, product.getName());
+        }
 
-        item.getPropertiesMap().put(ORDER_PRODUCT_NAME, product.getName());
+        if (!TextUtils.isEmpty(product.getCode())) {
+            dataMap.put(ORDER_PRODUCT_CODE, product.getCode());
+        }
 
-        item.getPropertiesMap().put(ORDER_PRODUCT_CODE, product.getCode());
+        if (product.getPrice() != 0) {
+            dataMap.put(ORDER_PRODUCT_PRICE, String.valueOf(product.getPrice()));
+        }
 
-        item.getPropertiesMap().put(ORDER_PRODUCT_PRICE, String.valueOf(product.getPrice()));
+        if (product.getQuantity() != 0) {
+            dataMap.put(ORDER_PRODUCT_QUANTITY, String.valueOf(product.getQuantity()));
+        }
 
-        item.getPropertiesMap().put(ORDER_PRODUCT_QUANTITY, String.valueOf(product.getQuantity()));
-
-        item.getPropertiesMap().put(ORDER_PRODUCT_VAT, product.getVat());
+        if (!TextUtils.isEmpty(product.getVat())) {
+            dataMap.put(ORDER_PRODUCT_VAT, product.getVat());
+        }
 
         if (!TextUtils.isEmpty(product.getPgGroup())) {
-            item.getPropertiesMap().put(ORDER_PRODUCT_GROUP, product.getPgGroup());
+            dataMap.put(ORDER_PRODUCT_GROUP, product.getPgGroup());
         }
 
         if (!TextUtils.isEmpty(product.getInfo())) {
-            item.getPropertiesMap().put(ORDER_PRODUCT_INFO, product.getInfo());
+            dataMap.put(ORDER_PRODUCT_INFO, product.getInfo());
         }
-
-        itemsList.add(item);
 
         return this;
     }
@@ -187,31 +188,29 @@ public class LURequestBuilder extends BaseRequestBuilder {
         String dataString = createHashDataString();
         dataMap.put(ORDER_HASH, EncodeUtils.encodeString(dataString, secretKey));
 
-        return createStringData(dataMap);
+        return createLinkedDataString();
     }
 
     public double getPurchasePrice() {
-        double sum = 0;
-
-        for (Item item : itemsList) {
-            sum += Double.parseDouble(item.getPropertiesMap().get(ORDER_PRODUCT_PRICE));
+        if (dataMap.containsKey(ORDER_PRODUCT_PRICE)) {
+            return Double.parseDouble(dataMap.get(ORDER_PRODUCT_PRICE));
+        } else {
+            return 0;
         }
-
-        return sum;
     }
 
     private String createHashDataString() {
-        Map<String, String> tempDataMap = new TreeMap<>();
-        tempDataMap.putAll(dataMap);
+        StringBuilder stringBuilder = new StringBuilder();
 
-        for (Item item : itemsList) {
-            tempDataMap.putAll(item.getPropertiesMap());
+        for (String value : dataMap.values()) {
+            stringBuilder.append(value.length());
+            stringBuilder.append(value);
         }
 
-        return createStringData(tempDataMap);
+        return stringBuilder.toString();
     }
 
-    private String createStringData(Map<String, String> dataMap) {
+    private String createLinkedDataString() {
         StringBuilder stringBuilder = new StringBuilder();
         boolean was = false;
 
@@ -236,18 +235,5 @@ public class LURequestBuilder extends BaseRequestBuilder {
         static final String ORDER_TIMEOUT = "ORDER_TIMEOUT";
         static final String TIMEOUT_URL = "TIMEOUT_URL";
         static final String DEBUG = "DEBUG";
-    }
-
-    private class Item {
-
-        private Map<String, String> propertiesMap;
-
-        private Item() {
-            propertiesMap = new TreeMap<>();
-        }
-
-        private Map<String, String> getPropertiesMap() {
-            return propertiesMap;
-        }
     }
 }

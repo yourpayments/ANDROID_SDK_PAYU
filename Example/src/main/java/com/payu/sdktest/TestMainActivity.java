@@ -74,7 +74,7 @@ public class TestMainActivity extends ListActivity {
                         "70000000000",
                         CountryCode.RU);
 
-                ALUCardInfo cardInfo = new ALUCardInfo("1122334455667777", "01", "2017", "071", "Maxim", "token");
+                ALUCardInfo cardInfo = new ALUCardInfo("0111 1111 1111 1111", "01", "2017", "071", "Maxim");
 
                 List<ALUProduct> productsList = new ArrayList<>();
                 productsList.add(new ALUProduct("name1", "code1", 1, 1, "info1", "version1"));
@@ -86,12 +86,12 @@ public class TestMainActivity extends ListActivity {
                         .setBackRef("")
                         .setBillClientInfo(billClientInfo)
                         .setPriceCurrency(PriceCurrency.RUB)
-                        .setPaymentMethod(PayMethodType.EUROSET_SVYAZNOI)
+                        .setPaymentMethod(PayMethodType.CCVISAMC)
                         .setLanguage(LanguageType.RU)
                         .setOrderShipping(1007)
                         .setCardInfo(cardInfo)
                         .addProduct(productsList)
-                        .setIsTestOrder(false);
+                        .setIsTestOrder(true);
 
                 final ALUResponse response = new PAYUHttpRest().submitOrderALU(requestBuilder.build());
 

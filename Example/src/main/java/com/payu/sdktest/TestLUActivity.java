@@ -7,6 +7,7 @@ import com.payu.payusdk.models.CountryCode;
 import com.payu.payusdk.models.LanguageType;
 import com.payu.payusdk.models.PayMethodType;
 import com.payu.payusdk.models.PriceCurrency;
+import com.payu.payusdk.models.lu.LUProduct;
 import com.payu.payusdk.protocols.LURequestBuilder;
 import com.payu.payusdk.rest.PAYURestConfig;
 import com.payu.payusdk.utils.EncodeUtils;
@@ -30,11 +31,13 @@ public class TestLUActivity extends Activity {
                 .setDiscount(200.1)
                 .setPaymentMethod(PayMethodType.CCVISAMC)
                 .setOrderShipping(1200)
-                .setPriceCurrency(PriceCurrency.USD)
+                .setPriceCurrency(PriceCurrency.RUB)
+                .addProduct(new LUProduct("name", "code", 100.0, 12, "0"))
                 .setOrderTimeout(20000)
                 .setIsTestOrder(true)
                 .setDebug(true);
 
-        LUPurchaseView.postUrl(PAYURestConfig.SUBMIT_ORDER_LU_URL, EncodeUtils.getBytes(builder.build(), "BASE64"));
+        byte[] dostDataArray = EncodeUtils.getBytes(builder.build(), "UTF-8");
+        LUPurchaseView.postUrl(PAYURestConfig.SUBMIT_ORDER_LU_URL, dostDataArray);
     }
 }
