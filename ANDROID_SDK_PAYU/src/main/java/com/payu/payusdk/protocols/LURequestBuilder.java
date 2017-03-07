@@ -10,6 +10,7 @@ import com.payu.payusdk.models.lu.LUProduct;
 import com.payu.payusdk.utils.DateUtils;
 import com.payu.payusdk.utils.EncodeUtils;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.BILL_COUNTRY_CODE;
@@ -21,13 +22,6 @@ import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.LANGUAGE;
 import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.MERCHANT;
 import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_DATE;
 import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_HASH;
-import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_PRODUCT_CODE;
-import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_PRODUCT_GROUP;
-import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_PRODUCT_INFO;
-import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_PRODUCT_NAME;
-import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_PRODUCT_PRICE;
-import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_PRODUCT_QUANTITY;
-import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_PRODUCT_VAT;
 import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_REF;
 import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.ORDER_SHIPPING;
 import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.PAY_METHOD;
@@ -35,13 +29,24 @@ import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.PRICES_CURR
 import static com.payu.payusdk.protocols.BaseRequestBuilder.RestKeys.TEST_ORDER;
 import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.DEBUG;
 import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.DISCOUNT;
+import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_PRODUCT_CODE_$;
+import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_PRODUCT_GROUP_$;
+import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_PRODUCT_INFO_$;
+import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_PRODUCT_NAME_$;
+import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_PRODUCT_PRICE_$;
+import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_PRODUCT_QUANTITY_$;
+import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_PRODUCT_VAT_$;
 import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_TIMEOUT;
 import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.TIMEOUT_URL;
+import static com.payu.payusdk.utils.Constants.NOT_INITIALIZED;
 
 public class LURequestBuilder extends BaseRequestBuilder {
 
+    private int purchaseCount;
+
     public LURequestBuilder(String secretKey) {
         super(secretKey);
+        purchaseCount = NOT_INITIALIZED;
     }
 
     // -- START required fields ---
@@ -148,33 +153,38 @@ public class LURequestBuilder extends BaseRequestBuilder {
         return this;
     }
 
-    public LURequestBuilder addProduct(LUProduct product) {
-        if (!TextUtils.isEmpty(product.getName())) {
-            dataMap.put(ORDER_PRODUCT_NAME, product.getName());
-        }
+    public LURequestBuilder addProduct(List<LUProduct> productsList) {
+        for (int i = 0; i < productsList.size(); i++) {
+            LUProduct product = productsList.get(i);
+            purchaseCount++;
 
-        if (!TextUtils.isEmpty(product.getCode())) {
-            dataMap.put(ORDER_PRODUCT_CODE, product.getCode());
-        }
+            if (!TextUtils.isEmpty(product.getName())) {
+                dataMap.put(String.format(ORDER_PRODUCT_NAME_$, purchaseCount), product.getName());
+            }
 
-        if (product.getPrice() != 0) {
-            dataMap.put(ORDER_PRODUCT_PRICE, String.valueOf(product.getPrice()));
-        }
+            if (!TextUtils.isEmpty(product.getCode())) {
+                dataMap.put(String.format(ORDER_PRODUCT_CODE_$, purchaseCount), product.getCode());
+            }
 
-        if (product.getQuantity() != 0) {
-            dataMap.put(ORDER_PRODUCT_QUANTITY, String.valueOf(product.getQuantity()));
-        }
+            if (product.getPrice() != 0) {
+                dataMap.put(String.format(ORDER_PRODUCT_PRICE_$, purchaseCount), String.valueOf(product.getPrice()));
+            }
 
-        if (!TextUtils.isEmpty(product.getVat())) {
-            dataMap.put(ORDER_PRODUCT_VAT, product.getVat());
-        }
+            if (product.getQuantity() != 0) {
+                dataMap.put(String.format(ORDER_PRODUCT_QUANTITY_$, purchaseCount), String.valueOf(product.getQuantity()));
+            }
 
-        if (!TextUtils.isEmpty(product.getPgGroup())) {
-            dataMap.put(ORDER_PRODUCT_GROUP, product.getPgGroup());
-        }
+            if (!TextUtils.isEmpty(product.getVat())) {
+                dataMap.put(String.format(ORDER_PRODUCT_VAT_$, purchaseCount), product.getVat());
+            }
 
-        if (!TextUtils.isEmpty(product.getInfo())) {
-            dataMap.put(ORDER_PRODUCT_INFO, product.getInfo());
+            if (!TextUtils.isEmpty(product.getPgGroup())) {
+                dataMap.put(String.format(ORDER_PRODUCT_GROUP_$, purchaseCount), product.getPgGroup());
+            }
+
+            if (!TextUtils.isEmpty(product.getInfo())) {
+                dataMap.put(String.format(ORDER_PRODUCT_INFO_$, purchaseCount), product.getInfo());
+            }
         }
 
         return this;
@@ -192,11 +202,13 @@ public class LURequestBuilder extends BaseRequestBuilder {
     }
 
     public double getPurchasePrice() {
-        if (dataMap.containsKey(ORDER_PRODUCT_PRICE)) {
-            return Double.parseDouble(dataMap.get(ORDER_PRODUCT_PRICE));
-        } else {
-            return 0;
+        int sum = 0;
+
+        for (int i = 0; i < purchaseCount + 1; ++i) {
+            sum += Double.parseDouble(dataMap.get(String.format(ORDER_PRODUCT_PRICE_$, i)));
         }
+
+        return sum;
     }
 
     private String createHashDataString() {
@@ -235,5 +247,13 @@ public class LURequestBuilder extends BaseRequestBuilder {
         static final String ORDER_TIMEOUT = "ORDER_TIMEOUT";
         static final String TIMEOUT_URL = "TIMEOUT_URL";
         static final String DEBUG = "DEBUG";
+
+        static final String ORDER_PRODUCT_NAME_$ = "ORDER_PNAME[%1$d]";
+        static final String ORDER_PRODUCT_CODE_$ = "ORDER_PCODE[%1$d]";
+        static final String ORDER_PRODUCT_PRICE_$ = "ORDER_PRICE[%1$d]";
+        static final String ORDER_PRODUCT_QUANTITY_$ = "ORDER_QTY[%1$d]";
+        static final String ORDER_PRODUCT_VAT_$ = "ORDER_VAT[%1$d]";
+        static final String ORDER_PRODUCT_GROUP_$ = "ORDER_PGROUP[%1$d]";
+        static final String ORDER_PRODUCT_INFO_$ = "ORDER_PINFO[%1$d]";
     }
 }

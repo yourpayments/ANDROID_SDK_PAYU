@@ -38,14 +38,6 @@ abstract class BaseRequestBuilder {
 
         static final String TEST_ORDER = "TESTORDER";
 
-        static final String ORDER_PRODUCT_NAME = "ORDER_PNAME[]";
-        static final String ORDER_PRODUCT_CODE = "ORDER_PCODE[]";
-        static final String ORDER_PRODUCT_PRICE = "ORDER_PRICE[]";
-        static final String ORDER_PRODUCT_QUANTITY = "ORDER_QTY[]";
-        static final String ORDER_PRODUCT_VAT = "ORDER_VAT[]";
-        static final String ORDER_PRODUCT_GROUP = "ORDER_PGROUP[]";
-        static final String ORDER_PRODUCT_INFO = "ORDER_PINFO[]";
-
         static final String ORDER_AMOUNT = "ORDER_AMOUNT";
         static final String ORDER_CURRENCY = "ORDER_CURRENCY";
     }
