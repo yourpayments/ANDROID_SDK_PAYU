@@ -38,7 +38,7 @@ public class IOSRequestBuilder extends BaseRequestBuilder {
         StringBuilder stringBuilder = new StringBuilder();
 
         for (String value : dataMap.values()) {
-            stringBuilder.append(value.length());
+            stringBuilder.append(value.getBytes().length);
             stringBuilder.append(value);
         }
 

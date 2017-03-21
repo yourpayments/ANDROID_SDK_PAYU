@@ -10,6 +10,8 @@ import com.payu.payusdk.models.lu.LUProduct;
 import com.payu.payusdk.utils.DateUtils;
 import com.payu.payusdk.utils.EncodeUtils;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,15 +40,15 @@ import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_PRODUCT
 import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_PRODUCT_VAT_$;
 import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.ORDER_TIMEOUT;
 import static com.payu.payusdk.protocols.LURequestBuilder.RestKeys.TIMEOUT_URL;
-import static com.payu.payusdk.utils.Constants.NOT_INITIALIZED;
 
 public class LURequestBuilder extends BaseRequestBuilder {
 
-    private int purchaseCount;
+    private List<LUProduct> productsList;
 
     public LURequestBuilder(String secretKey) {
         super(secretKey);
-        purchaseCount = NOT_INITIALIZED;
+        dataMap = new LinkedHashMap<>();
+        productsList = Collections.emptyList();
     }
 
     // -- START required fields ---
@@ -64,6 +66,44 @@ public class LURequestBuilder extends BaseRequestBuilder {
 
     public LURequestBuilder setOrderDate(String date) {
         dataMap.put(ORDER_DATE, date);
+
+        return this;
+    }
+
+    public LURequestBuilder addProducts(List<LUProduct> productsList) {
+        this.productsList = productsList;
+
+        for (int i = 0; i < productsList.size(); i++) {
+            LUProduct product = productsList.get(i);
+
+            if (!TextUtils.isEmpty(product.getName())) {
+                dataMap.put(String.format(ORDER_PRODUCT_NAME_$, i), product.getName());
+            }
+
+            if (!TextUtils.isEmpty(product.getPgGroup())) {
+                dataMap.put(String.format(ORDER_PRODUCT_GROUP_$, i), product.getPgGroup());
+            }
+
+            if (!TextUtils.isEmpty(product.getCode())) {
+                dataMap.put(String.format(ORDER_PRODUCT_CODE_$, i), product.getCode());
+            }
+
+            if (!TextUtils.isEmpty(product.getInfo())) {
+                dataMap.put(String.format(ORDER_PRODUCT_INFO_$, i), product.getInfo());
+            }
+
+            if (product.getPrice() != 0) {
+                dataMap.put(String.format(ORDER_PRODUCT_PRICE_$, i), String.valueOf(product.getPrice()));
+            }
+
+            if (product.getQuantity() != 0) {
+                dataMap.put(String.format(ORDER_PRODUCT_QUANTITY_$, i), String.valueOf(product.getQuantity()));
+            }
+
+            if (!TextUtils.isEmpty(product.getVat())) {
+                dataMap.put(String.format(ORDER_PRODUCT_VAT_$, i), product.getVat());
+            }
+        }
 
         return this;
     }
@@ -153,50 +193,13 @@ public class LURequestBuilder extends BaseRequestBuilder {
         return this;
     }
 
-    public LURequestBuilder addProduct(List<LUProduct> productsList) {
-        for (int i = 0; i < productsList.size(); i++) {
-            LUProduct product = productsList.get(i);
-            purchaseCount++;
-
-            if (!TextUtils.isEmpty(product.getName())) {
-                dataMap.put(String.format(ORDER_PRODUCT_NAME_$, purchaseCount), product.getName());
-            }
-
-            if (!TextUtils.isEmpty(product.getCode())) {
-                dataMap.put(String.format(ORDER_PRODUCT_CODE_$, purchaseCount), product.getCode());
-            }
-
-            if (product.getPrice() != 0) {
-                dataMap.put(String.format(ORDER_PRODUCT_PRICE_$, purchaseCount), String.valueOf(product.getPrice()));
-            }
-
-            if (product.getQuantity() != 0) {
-                dataMap.put(String.format(ORDER_PRODUCT_QUANTITY_$, purchaseCount), String.valueOf(product.getQuantity()));
-            }
-
-            if (!TextUtils.isEmpty(product.getVat())) {
-                dataMap.put(String.format(ORDER_PRODUCT_VAT_$, purchaseCount), product.getVat());
-            }
-
-            if (!TextUtils.isEmpty(product.getPgGroup())) {
-                dataMap.put(String.format(ORDER_PRODUCT_GROUP_$, purchaseCount), product.getPgGroup());
-            }
-
-            if (!TextUtils.isEmpty(product.getInfo())) {
-                dataMap.put(String.format(ORDER_PRODUCT_INFO_$, purchaseCount), product.getInfo());
-            }
-        }
-
-        return this;
-    }
-
     public String build() {
         if (!dataMap.containsKey(ORDER_DATE)) {
             dataMap.put(ORDER_DATE, DateUtils.getCurrentDateUTC());
         }
 
-        String dataString = createHashDataString();
-        dataMap.put(ORDER_HASH, EncodeUtils.encodeString(dataString, secretKey));
+        String hashDataString = createHashDataString();
+        dataMap.put(ORDER_HASH, EncodeUtils.encodeString(hashDataString, secretKey));
 
         return createLinkedDataString();
     }
@@ -204,8 +207,9 @@ public class LURequestBuilder extends BaseRequestBuilder {
     public double getPurchasePrice() {
         int sum = 0;
 
-        for (int i = 0; i < purchaseCount + 1; ++i) {
-            sum += Double.parseDouble(dataMap.get(String.format(ORDER_PRODUCT_PRICE_$, i)));
+        for (int i = 0; i < productsList.size(); ++i) {
+            LUProduct product = productsList.get(i);
+            sum += product.getPrice();
         }
 
         return sum;
@@ -214,12 +218,71 @@ public class LURequestBuilder extends BaseRequestBuilder {
     private String createHashDataString() {
         StringBuilder stringBuilder = new StringBuilder();
 
-        for (String value : dataMap.values()) {
-            stringBuilder.append(value.length());
-            stringBuilder.append(value);
-        }
+        addHashPair(stringBuilder, dataMap.get(MERCHANT));
+        addHashPair(stringBuilder, dataMap.get(ORDER_REF));
+        addHashPair(stringBuilder, dataMap.get(ORDER_DATE));
+
+        addProductHashPairs(stringBuilder);
+
+        addHashPair(stringBuilder, dataMap.get(ORDER_SHIPPING));
+        addHashPair(stringBuilder, dataMap.get(PRICES_CURRENCY));
+
+        addTestOrderHashPair(stringBuilder);
 
         return stringBuilder.toString();
+    }
+
+    private void addHashPair(StringBuilder stringBuilder, String value) {
+        if (value != null) {
+            stringBuilder.append(value.getBytes().length);
+            stringBuilder.append(value);
+        }
+    }
+
+    private void addProductHashPairs(StringBuilder stringBuilder) {
+        if (!productsList.isEmpty()) {
+            // add all NAMES
+            for (int i = 0; i < productsList.size(); i++) {
+                LUProduct product = productsList.get(i);
+                addHashPair(stringBuilder, product.getName());
+            }
+
+            // add all CODES
+            for (int i = 0; i < productsList.size(); i++) {
+                LUProduct product = productsList.get(i);
+                addHashPair(stringBuilder, product.getCode());
+            }
+
+            // add all INFOS
+            for (int i = 0; i < productsList.size(); i++) {
+                LUProduct product = productsList.get(i);
+                addHashPair(stringBuilder, product.getInfo());
+            }
+
+            // add all PRICES
+            for (int i = 0; i < productsList.size(); i++) {
+                LUProduct product = productsList.get(i);
+                addHashPair(stringBuilder, String.valueOf(product.getPrice()));
+            }
+
+            // add all QUANTITIES
+            for (int i = 0; i < productsList.size(); i++) {
+                LUProduct product = productsList.get(i);
+                addHashPair(stringBuilder, String.valueOf(product.getQuantity()));
+            }
+
+            // add all VATS
+            for (int i = 0; i < productsList.size(); i++) {
+                LUProduct product = productsList.get(i);
+                addHashPair(stringBuilder, product.getVat());
+            }
+        }
+    }
+
+    private void addTestOrderHashPair(StringBuilder stringBuilder) {
+        if (dataMap.containsKey(TEST_ORDER) && dataMap.get(TEST_ORDER).equalsIgnoreCase(Boolean.TRUE.toString())) {
+            addHashPair(stringBuilder, dataMap.get(TEST_ORDER));
+        }
     }
 
     private String createLinkedDataString() {
