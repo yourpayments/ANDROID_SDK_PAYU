@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 
 import com.payu.payusdk.models.CountryCode;
+import com.payu.payusdk.models.PayMethodType;
 import com.payu.payusdk.models.PriceCurrency;
 import com.payu.payusdk.models.lu.LUProduct;
 import com.payu.payusdk.protocols.LURequestBuilder;
@@ -44,6 +45,7 @@ public class TestLUActivity extends Activity {
                 .setBillFirstName("Max")
                 .setBillLastName("Mel")
                 .setBillCountryCode(CountryCode.RU)
+                .setPaymentMethod(PayMethodType.ALFACLICK)
                 .setIsTestOrder(true)
                 .setDebug(true);
 

@@ -226,6 +226,7 @@ public class LURequestBuilder extends BaseRequestBuilder {
 
         addHashPair(stringBuilder, dataMap.get(ORDER_SHIPPING));
         addHashPair(stringBuilder, dataMap.get(PRICES_CURRENCY));
+        addHashPair(stringBuilder, dataMap.get(PAY_METHOD));
 
         addTestOrderHashPair(stringBuilder);
 
