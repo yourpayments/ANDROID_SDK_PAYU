@@ -2,7 +2,7 @@ package com.payu.payusdk.rest;
 
 public class PAYURestConfig {
 
-    private static final String BASE_REST_API = "https://secure.payu.ru";
+    private static final String BASE_REST_API = "https://secure.ypmn.ru";
 
     static final String SUBMIT_ORDER_ALU_URL = BASE_REST_API.concat("/order/alu/v3");
     static final String CHECK_ORDER_IOS_URL = BASE_REST_API.concat("/order/ios.php");
