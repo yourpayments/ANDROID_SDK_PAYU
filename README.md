@@ -1,4 +1,4 @@
-# «Твои платежи», SDK для Android
+# «Твои платежи», SDK для OS Android
 
 ![](https://repository-images.githubusercontent.com/638835276/ff494b04-d65b-4843-8759-e85c689a7e80)
 
